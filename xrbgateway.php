@@ -11,7 +11,7 @@
  * Within the module itself, all functions must be prefixed with the module
  * filename, followed by an underscore, and then the function name. For this
  * example file, the filename is "gatewaymodule" and therefore all functions
- * begin "gatewaymodule_".
+ * begin "xrbgateway_".
  *
  * If your module or third party API does not support a given function, you
  * should not define that function within your module. Only the _config
@@ -37,7 +37,7 @@ if (!defined("WHMCS")) {
  *
  * @return array
  */
-function gatewaymodule_MetaData()
+function xrbgateway_MetaData()
 {
     return array(
         'DisplayName' => 'XRB Raiblocks Gateway',
@@ -66,7 +66,7 @@ function gatewaymodule_MetaData()
  *
  * @return array
  */
-function gatewaymodule_config()
+function xrbgateway_config()
 {
     return array(
         // the friendly display name for a payment gateway should be
@@ -100,12 +100,12 @@ function gatewaymodule_config()
  *
  * @return string
  */
-function gatewaymodule_link($params)
+function xrbgateway_link($params)
 {
 	
 	
     // Gateway Configuration Parameters
-    $accountId = $params['walletID'];
+    $walletId = $params['walletID'];
     // Invoice Parameters
     $invoiceId = $params['invoiceid'];
     $description = $params["description"];
@@ -166,8 +166,33 @@ function gatewaymodule_link($params)
     foreach ($postfields as $k => $v) {
         $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . urlencode($v) . '" />';
     }
-	$htmlOutput .= '<p>Got XRB price from: '.'https://api.coinmarketcap.com/v1/ticker/raiblocks/?convert='.$currencyCode.'</p><p>Price is: '.$XRBPrice.'</p>';
-    $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
+	$htmlOutput .= '<p>Price according to '.'https://api.coinmarketcap.com/v1/ticker/raiblocks/?convert='.$currencyCode.'</p><p>1 XRB = '.$json_data[0]["price_".strtolower($currencyCode)].' EUR</p>';
+	$htmlOutput .= '<p>Total invoice amount: '.($amount/$json_data[0]["price_".strtolower($currencyCode)]).'XRB</p>';
+    $htmlOutput .= '<div id="raiblocks-button"></div>
+
+<script src="https://brainblocks.io/brainblocks.js"></script>
+
+<script>
+    // Render the RaiBlocks button
+
+    brainblocks.Button.render({
+
+        // Pass in payment options
+
+        payment: {
+            destination: \''.$walletId.'\',
+            currency:    \'rai\',
+            amount:      '.(($amount/$json_data[0]["price_".strtolower($currencyCode)])*1000000).'
+        },
+
+        // Handle successful payments
+
+        onPayment: function(data) {
+            console.log(\'Payment successful!\', data.token);
+        }
+
+    }, \'#raiblocks-button\');
+</script>';
     $htmlOutput .= '</form>';
     return $htmlOutput;
 }
@@ -182,7 +207,7 @@ function gatewaymodule_link($params)
  *
  * @return array Transaction response status
  */
-function gatewaymodule_refund($params)
+function xrbgateway_refund($params)
 {
     // Gateway Configuration Parameters
     $accountId = $params['accountID'];
@@ -238,7 +263,7 @@ function gatewaymodule_refund($params)
  *
  * @return array Transaction response status
  */
-function gatewaymodule_cancelSubscription($params)
+function xrbgateway_cancelSubscription($params)
 {
     // Gateway Configuration Parameters
     $accountId = $params['accountID'];

@@ -21,9 +21,9 @@ require_once __DIR__ . '/../../../init.php';
 require_once __DIR__ . '/../../../includes/gatewayfunctions.php';
 require_once __DIR__ . '/../../../includes/invoicefunctions.php';
 // Detect module name from filename.
-$gatewayModuleName = basename(__FILE__, '.php');
+$xrbgatewayName = basename(__FILE__, '.php');
 // Fetch gateway configuration parameters.
-$gatewayParams = getGatewayVariables($gatewayModuleName);
+$gatewayParams = getGatewayVariables($xrbgatewayName);
 // Die if module is not active.
 if (!$gatewayParams['type']) {
     die("Module Not Activated");
@@ -97,13 +97,13 @@ if ($success) {
      * @param string $transactionId  Transaction ID
      * @param float $paymentAmount   Amount paid (defaults to full balance)
      * @param float $paymentFee      Payment fee (optional)
-     * @param string $gatewayModule  Gateway module name
+     * @param string $xrbgateway  Gateway module name
      */
     addInvoicePayment(
         $invoiceId,
         $transactionId,
         $paymentAmount,
         $paymentFee,
-        $gatewayModuleName
+        $xrbgatewayName
     );
 }
