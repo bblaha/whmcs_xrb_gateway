@@ -130,7 +130,7 @@ function xrbgateway_link($params)
     $moduleDisplayName = $params['name'];
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
-    $url = 'https://www.demopaymentgateway.com/do.payment';
+    $url = 'https://www.cored.at';
     $postfields = array();
     $postfields['username'] = $username;
     $postfields['invoice_id'] = $invoiceId;
@@ -149,6 +149,7 @@ function xrbgateway_link($params)
     $postfields['phone'] = $phone;
     $postfields['callback_url'] = $systemUrl . '/modules/gateways/callback/' . $moduleName . '.php';
     $postfields['return_url'] = $returnUrl;
+    $postfields['targetWallet'] = $walletId;
 	
 	//Get current XRB price from CMC
 	// Read JSON file
@@ -160,11 +161,14 @@ function xrbgateway_link($params)
 	//Print data
 	$XRBPrice = $json_data["price_".strtolower($currencyCode)];
 
+    $postfields['rai_amount'] = (($amount/$json_data[0]["price_".strtolower($currencyCode)])*1000000);
 	
 	//Assemble HTML output
     $htmlOutput = '<form method="post" action="' . $postfields['callback_url'] . '">';
+	$postData = 'gateway=xrb'
     foreach ($postfields as $k => $v) {
         $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . urlencode($v) . '" />';
+		$postData .= '&'.$k.'='.$v;
     }
 	$htmlOutput .= '<p>Price according to '.'https://api.coinmarketcap.com/v1/ticker/raiblocks/?convert='.$currencyCode.'</p><p>1 XRB = '.$json_data[0]["price_".strtolower($currencyCode)].' EUR</p>';
 	$htmlOutput .= '<p>Total invoice amount: '.($amount/$json_data[0]["price_".strtolower($currencyCode)]).'XRB</p>';
@@ -182,13 +186,23 @@ function xrbgateway_link($params)
         payment: {
             destination: \''.$walletId.'\',
             currency:    \'rai\',
-            amount:      '.(($amount/$json_data[0]["price_".strtolower($currencyCode)])*1000000).'
+            amount:      '.$postfields['rai_amount'].'
         },
 
         // Handle successful payments
 
         onPayment: function(data) {
             console.log(\'Payment successful!\', data.token);
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function() {
+				if (this.readyState == 4 && this.status == 200) {
+				console.log(this.responseText);
+				location.reload();
+				}
+			};
+			xhttp.open("POST", "'.$postfields['callback_url'].'", true);
+			xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			xhttp.send("'.$postData.'&x_trans_id="+data.token);
         }
 
     }, \'#raiblocks-button\');

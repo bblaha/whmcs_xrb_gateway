@@ -21,22 +21,19 @@ require_once __DIR__ . '/../../../init.php';
 require_once __DIR__ . '/../../../includes/gatewayfunctions.php';
 require_once __DIR__ . '/../../../includes/invoicefunctions.php';
 // Detect module name from filename.
-$xrbgatewayName = basename(__FILE__, '.php');
+$gatewayModuleName = basename(__FILE__, '.php');
 // Fetch gateway configuration parameters.
-$gatewayParams = getGatewayVariables($xrbgatewayName);
+$gatewayParams = getGatewayVariables($gatewayModuleName);
 // Die if module is not active.
 if (!$gatewayParams['type']) {
     die("Module Not Activated");
 }
 // Retrieve data returned in payment gateway callback
 // Varies per payment gateway
-$success = $_POST["x_status"];
-$invoiceId = $_POST["x_invoice_id"];
+$invoiceId = $_POST["invoice_id"];
 $transactionId = $_POST["x_trans_id"];
-$paymentAmount = $_POST["x_amount"];
-$paymentFee = $_POST["x_fee"];
-$hash = $_POST["x_hash"];
-$transactionStatus = $success ? 'Success' : 'Failure';
+$paymentAmount = $_POST["rai_amount"];
+$targetWallet = $_POST["targetWallet"];
 /**
  * Validate callback authenticity.
  *
@@ -45,9 +42,14 @@ $transactionStatus = $success ? 'Success' : 'Failure';
  * way of a shared secret which is used to build and compare a hash.
  */
 $secretKey = $gatewayParams['secretKey'];
-if ($hash != md5($invoiceId . $transactionId . $paymentAmount . $secretKey)) {
-    $transactionStatus = 'Hash Verification Failure';
-    $success = false;
+//Get current XRB price from CMC
+// Read JSON file
+$json = file_get_contents('https://brainblocks.io/api/session/'.$transactionId.'/verify');
+//Decode JSON
+$json_data = json_decode($json,true);
+
+if($json_data[0]["destination"] == $targetWallet && $json_data[0]["received"] == $paymentAmount){
+	$success = true;
 }
 /**
  * Validate Callback Invoice ID.
@@ -97,13 +99,13 @@ if ($success) {
      * @param string $transactionId  Transaction ID
      * @param float $paymentAmount   Amount paid (defaults to full balance)
      * @param float $paymentFee      Payment fee (optional)
-     * @param string $xrbgateway  Gateway module name
+     * @param string $gatewayModule  Gateway module name
      */
     addInvoicePayment(
         $invoiceId,
         $transactionId,
         $paymentAmount,
-        $paymentFee,
-        $xrbgatewayName
+        0,
+        $gatewayModuleName
     );
 }
