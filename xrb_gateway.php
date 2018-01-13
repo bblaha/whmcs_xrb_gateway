@@ -40,7 +40,7 @@ if (!defined("WHMCS")) {
 function gatewaymodule_MetaData()
 {
     return array(
-        'DisplayName' => 'Sample Payment Gateway Module',
+        'DisplayName' => 'XRB Raiblocks Gateway',
         'APIVersion' => '1.1', // Use API Version 1.1
         'DisableLocalCredtCardInput' => true,
         'TokenisedStorage' => false,
@@ -73,56 +73,17 @@ function gatewaymodule_config()
         // defined here for backwards compatibility
         'FriendlyName' => array(
             'Type' => 'System',
-            'Value' => 'Sample Third Party Payment Gateway Module',
+            'Value' => 'XRB Raiblocks Payment Gateway Module',
         ),
-        // a text field type allows for single line text input
-        'accountID' => array(
-            'FriendlyName' => 'Account ID',
+        // shop owner address
+        'walletID' => array(
+            'FriendlyName' => 'Your XRB wallet address',
             'Type' => 'text',
-            'Size' => '25',
-            'Default' => '',
-            'Description' => 'Enter your account ID here',
+            'Size' => '64',
+            'Default' => 'xrb_1d9dyx9ndja3s1mn595ayifafcao9nnfyggza7urfy1tt88g54xnb8xwaaor',
+            'Description' => 'Enter your wallet address here',
         ),
-        // a password field type allows for masked text input
-        'secretKey' => array(
-            'FriendlyName' => 'Secret Key',
-            'Type' => 'password',
-            'Size' => '25',
-            'Default' => '',
-            'Description' => 'Enter secret key here',
-        ),
-        // the yesno field type displays a single checkbox option
-        'testMode' => array(
-            'FriendlyName' => 'Test Mode',
-            'Type' => 'yesno',
-            'Description' => 'Tick to enable test mode',
-        ),
-        // the dropdown field type renders a select menu of options
-        'dropdownField' => array(
-            'FriendlyName' => 'Dropdown Field',
-            'Type' => 'dropdown',
-            'Options' => array(
-                'option1' => 'Display Value 1',
-                'option2' => 'Second Option',
-                'option3' => 'Another Option',
-            ),
-            'Description' => 'Choose one',
-        ),
-        // the radio field type displays a series of radio button options
-        'radioField' => array(
-            'FriendlyName' => 'Radio Field',
-            'Type' => 'radio',
-            'Options' => 'First Option,Second Option,Third Option',
-            'Description' => 'Choose your option!',
-        ),
-        // the textarea field type allows for multi-line text input
-        'textareaField' => array(
-            'FriendlyName' => 'Textarea Field',
-            'Type' => 'textarea',
-            'Rows' => '3',
-            'Cols' => '60',
-            'Description' => 'Freeform multi-line text input field',
-        ),
+        
     );
 }
 /**
@@ -141,13 +102,10 @@ function gatewaymodule_config()
  */
 function gatewaymodule_link($params)
 {
+	
+	
     // Gateway Configuration Parameters
-    $accountId = $params['accountID'];
-    $secretKey = $params['secretKey'];
-    $testMode = $params['testMode'];
-    $dropdownField = $params['dropdownField'];
-    $radioField = $params['radioField'];
-    $textareaField = $params['textareaField'];
+    $accountId = $params['walletID'];
     // Invoice Parameters
     $invoiceId = $params['invoiceid'];
     $description = $params["description"];
@@ -191,10 +149,24 @@ function gatewaymodule_link($params)
     $postfields['phone'] = $phone;
     $postfields['callback_url'] = $systemUrl . '/modules/gateways/callback/' . $moduleName . '.php';
     $postfields['return_url'] = $returnUrl;
-    $htmlOutput = '<form method="post" action="' . $url . '">';
+	
+	//Get current XRB price from CMC
+	// Read JSON file
+	$json = file_get_contents('https://api.coinmarketcap.com/v1/ticker/raiblocks/?convert='.$currencyCode);
+
+	//Decode JSON
+	$json_data = json_decode($json,true);
+
+	//Print data
+	$XRBPrice = $json_data["price_".strtolower($currencyCode)];
+
+	
+	//Assemble HTML output
+    $htmlOutput = '<form method="post" action="' . $postfields['callback_url'] . '">';
     foreach ($postfields as $k => $v) {
         $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . urlencode($v) . '" />';
     }
+	$htmlOutput .= '<p>Got XRB price from: '.'https://api.coinmarketcap.com/v1/ticker/raiblocks/?convert='.$currencyCode.'</p><p>Price is: '.$XRBPrice.'</p>';
     $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
     $htmlOutput .= '</form>';
     return $htmlOutput;
