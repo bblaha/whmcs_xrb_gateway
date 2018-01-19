@@ -25,7 +25,6 @@ $gatewayModuleName = basename(__FILE__, '.php');
 // Fetch gateway configuration parameters.
 $gatewayParams = getGatewayVariables($gatewayModuleName);
 // Die if module is not active.
-logActivity('Message goes here', 0);
 if (!$gatewayParams['type']) {
     die("Module Not Activated");
 }
@@ -34,6 +33,7 @@ if (!$gatewayParams['type']) {
 $invoiceId = $_POST["invoice_id"];
 $transactionId = $_POST["x_trans_id"];
 $paymentAmount = $_POST["rai_amount"];
+$invAmount = $_POST["amount"];
 $targetWallet = $_POST["targetWallet"];
 /**
  * Validate callback authenticity.
@@ -49,7 +49,7 @@ $json = file_get_contents('https://brainblocks.io/api/session/'.$transactionId.'
 //Decode JSON
 $json_data = json_decode($json,true);
 
-if($json_data[0]["destination"] == $targetWallet && $json_data[0]["received"] == $paymentAmount){
+if($json_data["destination"] == $targetWallet && $json_data["received_rai"] >= $paymentAmount-1){
 	$success = true;
 }
 /**
@@ -105,7 +105,7 @@ if ($success) {
     addInvoicePayment(
         $invoiceId,
         $transactionId,
-        $paymentAmount,
+        $invAmount,
         0,
         $gatewayModuleName
     );
