@@ -25,6 +25,7 @@ $gatewayModuleName = basename(__FILE__, '.php');
 // Fetch gateway configuration parameters.
 $gatewayParams = getGatewayVariables($gatewayModuleName);
 // Die if module is not active.
+logActivity('Message goes here', 0);
 if (!$gatewayParams['type']) {
     die("Module Not Activated");
 }

@@ -165,7 +165,7 @@ function xrbgateway_link($params)
 	
 	//Assemble HTML output
     $htmlOutput = '<form method="post" action="' . $postfields['callback_url'] . '">';
-	$postData = 'gateway=xrb'
+	$postData = 'gateway=xrb';
     foreach ($postfields as $k => $v) {
         $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . urlencode($v) . '" />';
 		$postData .= '&'.$k.'='.$v;
@@ -192,7 +192,7 @@ function xrbgateway_link($params)
         // Handle successful payments
 
         onPayment: function(data) {
-            console.log(\'Payment successful!\', data.token);
+            console.log(data.token);
 			var xhttp = new XMLHttpRequest();
 			xhttp.onreadystatechange = function() {
 				if (this.readyState == 4 && this.status == 200) {
